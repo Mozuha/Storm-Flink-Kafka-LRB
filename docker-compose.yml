@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+        example:
+                #restart: always
+                build: .
+                container_name: example
+                command: /sbin/init
+                privileged: true
+                tty: true
+                # Map port 8080 of the host machine to 8080 of the container.
+                # To accesss the Storm UI from our host machine.
+                ports:
+                        - 8081:8081
+                          #- 5432:5432
+        mitsimlab:
+                #build: ./MITSIMLab
+                image: centos:centos7
+                container_name: mitsimlab
+                #hostname: mitsimlab
+                tty: true
+                volumes:
+                        - ./MITSIMLab/pgsql/data:/var/lib/pgsql/data
+                        - ./MITSIMLab/mitsim/data:/usr/local/MITSIMLab/data
+                ports:
+                        - 5432:5432
