@@ -9,119 +9,13 @@ docker-compose up -d --build
 
 If `docker endpoint for "default" not found` error occurred, delete `meta.json` file under C:/User/Mizuki/.docker/context/meta/{hash}
 
-### 2. Get into container
-
-```bash
-docker-compose exec main bash
-```
-
-### 3. Download Zookeeper
-
-```bash
-cd usr/local/
-wget https://dlcdn.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz
-tar -zxvf apache-zookeeper-3.7.1-bin.tar.gz
-mv apache-zookeeper-3.7.1-bin zookeeper  # rename directory
-```
-
-### 4. Setup Zookeeper
-
-```bash
-mkdir /usr/local/zookeeper/data/
-vi /usr/local/zookeeper/conf/zoo.cfg
-```
-
-```bash
-# zoo.cfg
-tickTime=2000
-dataDir=/usr/local/zookeeper/data
-clientPort=2181
-initLimit=10
-syncLimit=5
-```
-
-### 5. Start Zookeeper
-
-```bash
-/usr/local/zookeeper/bin/zkServer.sh start
-```
-
-### 6. Download Storm
-
-```bash
-# in /usr/local/
-wget https://archive.apache.org/dist/storm/apache-storm-2.2.0/apache-storm-2.2.0.tar.gz
-tar -zxvf apache-storm-2.2.0.tar.gz
-mv apache-storm-2.2.0 storm
-```
-
-### 7. Setup Storm
-
-```bash
-mkdir /usr/local/storm/data
-vi /usr/local/storm/conf/storm.yaml
-```
-
-```bash
-# storm.yaml
-storm.zookeeper.servers:
-     - "localhost"
-storm.local.dir: "/usr/local/storm/data"
-nimbus.seeds: ["localhost"]
-supervisor.slots.ports:
-     - 6700
-     - 6701
-     - 6702
-     - 6703
-ui.port: 8081
-```
-
-```bash
-vi $HOME/.profile
-```
-
-```bash
-# .profile
-export PATH=$PATH:/usr/local/storm/bin  # set path
-```
-
-```bash
-source ~/.profile  # immediately apply path setting
-ln -s /usr/bin/python3 /usr/bin/python  # create symlink to python3 bin
-```
-
-### 8. Start Storm
-
-```bash
-storm nimbus &  # run in background
-storm supervisor &
-storm ui &
-```
-
-Access [`http://localhost:8081/`](http://localhost:8081/) to see Storm UI
-
-### 9. Download Kafka
-
-```bash
-wget https://downloads.apache.org/kafka/3.3.2/kafka_2.12-3.3.2.tgz
-tar -zxvf kafka_2.12-3.3.2.tgz
-mv kafka_2.12-3.3.2 kafka
-```
-
-### 10. Download (Setup?) Data Generator for Linear Road Benchmark
-
-Get into CentOS7 container and generate data
-
-mitsim コマンドが Ubuntu22 だと動かないっぽい？CentOS7 なら動くかも？
-
-別の container を CentOS7 で作って MITSIMLab の Data Generator だけそこで走らせて、output data を volumes に永続化してそれを流用？
+### 2. Download (Setup?) Data Generator for Linear Road Benchmark
 
 ```bash
 docker-compose exec mitsimlab bash
 ```
 
 ```bash
-# compat-libstdc++-33
 yum update -y && yum install -y ld-linux.so.2 wget gcc make postgresql-server perl perl-CPAN perl-Digest-MD5 m4
 
 rm -rf /var/lib/pgsql/data/*
@@ -160,7 +54,7 @@ numberofexpressways=2
 ```
 
 ```bash
-vi [DuplicateCars.pl](http://duplicatecars.pl/)
+vi DuplicateCars.pl
 ```
 
 ```bash
@@ -273,7 +167,7 @@ unix_socket_directories = '/tmp'
 ```
 
 ```bash
-vi [DuplicateCars.pl](http://duplicatecars.pl/)
+vi DuplicateCars.pl
 ```
 
 ```bash
@@ -318,7 +212,7 @@ export PATH=$PATH:/usr/local/storm/bin:$MITSIMDIR/MITSIMLab/bin:$PVM_ROOT/bin/LI
 
 ---
 
-### 11. Set up Kafka producer
+### 3. Run kafka producer
 
 ```bash
 docker-compose up -d zookeeper main
@@ -329,6 +223,18 @@ docker-compose exec main bash
 # produce data
 ./datafeeder ../dgoutput/historical-tolls.out
 ```
+
+### 4. Start Storm
+
+```bash
+docker-compose exec main bash
+
+storm nimbus &  # run in background
+storm supervisor &
+storm ui &
+```
+
+Access [`http://localhost:8081/`](http://localhost:8081/) to see Storm UI
 
 ### a. Update only one container within same compose
 
