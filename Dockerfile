@@ -30,10 +30,6 @@ COPY --chown=root:root MITSIMLab/mitsim/data/cardatapoints.out MITSIMLab/mitsim/
 WORKDIR /usr/local/lrb/datadriver
 COPY --chown=root:root datadriver/* /usr/local/lrb/datadriver/
 
-#start kafka broker service in background and create topic lrb
-RUN /usr/local/kafka/bin/kafka-server-start.sh kafka_server.properties &
-RUN /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
-
 #compile and link datadriver files
 RUN g++ -c `pkg-config --cflags glib-2.0 rdkafka` DataFeeder.cpp && \
     g++ -c LRDataProvider.cpp && \
