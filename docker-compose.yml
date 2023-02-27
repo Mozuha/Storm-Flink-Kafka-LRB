@@ -1,18 +1,28 @@
 version: '3'
 
 services:
-        example:
+        zookeeper:
+                image: zookeeper:latest
+                restart: always
+                container_name: zookeeper
+                hostname: zookeeper
+                ports:
+                        - 2181:2181
+                
+        main:
                 #restart: always
                 build: .
-                container_name: example
+                container_name: main
+                hostname: main
                 command: /sbin/init
                 privileged: true
                 tty: true
-                # Map port 8080 of the host machine to 8080 of the container.
-                # To accesss the Storm UI from our host machine.
                 ports:
-                        - 8081:8081
-                          #- 5432:5432
+                        - 8081:8081  # storm UI
+                        - 9092:9092  # kafka
+                depends_on:
+                        - zookeeper
+                
         mitsimlab:
                 #build: ./MITSIMLab
                 image: centos:centos7
