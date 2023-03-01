@@ -1,6 +1,6 @@
 # Storm, Kafka, Zookeeper, Docker
 
-### 1. Create docker image and container, then start container
+## 1. Create docker image and container, then start container
 
 ```bash
 cd example-storm-topologies
@@ -9,7 +9,7 @@ docker-compose up -d --build
 
 If `docker endpoint for "default" not found` error occurred, delete `meta.json` file under C:/User/Mizuki/.docker/context/meta/{hash}
 
-### 2. Download (Setup?) Data Generator for Linear Road Benchmark
+## 2. Download (Setup?) Data Generator for Linear Road Benchmark
 
 ```bash
 docker-compose exec mitsimlab bash
@@ -212,7 +212,7 @@ export PATH=$PATH:/usr/local/storm/bin:$MITSIMDIR/MITSIMLab/bin:$PVM_ROOT/bin/LI
 
 ---
 
-### 3. Run kafka producer
+## 3. Run kafka producer
 
 ```bash
 docker-compose up -d zookeeper data-producer
@@ -223,12 +223,27 @@ docker-compose exec data-producer bash
 # start kafka broker service in background and create topic lrb
 /usr/local/kafka/bin/kafka-server-start.sh /usr/local/lrb/datadriver/kafka_server.properties &
 /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
-
-# produce data
-./datafeeder ../dgoutput/historical-tolls.out
 ```
 
-### 4. Start Storm
+Feed and store whole data into Kafka broker before running Storm app to make it possible simulating certain event rate.
+
+```bash
+# produce data (it didn't feed the broker...)
+./datafeeder ../dgoutput/cardatapoints.out
+# ./datafeeder ../dgoutput/historical-tolls.out
+
+# or via Kafka connect (/usr/local/lrb/kafka_connect)
+/usr/local/kafka/bin/connect-standalone.sh connect-standalone.properties connect-file-source.properties
+
+
+# NOTE: to check what's inside kafka topic
+/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server=data-producer:9092 --topic lrb --from-beginning
+
+# NOTE: to delete records inside kafka topic
+/usr/local/kafka/bin/kafka-delete-records.sh --bootstrap-server=data-producer:9092 --offset-json-file ./offset-file.json
+```
+
+## 4. Start Storm
 
 ```bash
 # On first terminal
@@ -248,7 +263,7 @@ docker-compose exec storm-supervisor bash
 
 Access [`http://localhost:8081/`](http://localhost:8081/) to see Storm UI
 
-### 5. Run storm app
+## 5. Run storm app
 
 ```bash
 docker-compose exec storm-nimbus bash
@@ -256,9 +271,21 @@ docker-compose exec storm-nimbus bash
 # under /usr/local/storm_app
 mvn clean package -Dstorm.kafka.client.version=3.3.2 -Dcheckstyle.skip
 /usr/local/storm/bin/storm jar target/storm-kafka-lrb-2.2.0.jar main.KafkaStormTopology
+
+# NOTE: to kill topology
+/usr/local/storm/bin/storm kill kafka-storm
 ```
 
-### a. Update only one container within same compose
+## 6. Extract tuple outputs from log
+
+```bash
+# Filter out the logs that matches 'ConsumeBolt' (which shows the tuple output) and then pick those falls into certain timestamp range
+# the example below specifies the timestamp range to 52 min 23 sec 468 to 52 min 23 sec 568
+sed -n '/ConsumeBolt/p' ../storm/supervisor/logs/kafka-s
+torm-1-1677693130/6700/worker.log | sed -n '/52:23\.468/,/52:23\.568/p' > ./tupleoutputs_1sec.log
+```
+
+## a. Update only one container within same compose
 
 ```bash
 docker stop {container ID}
@@ -267,3 +294,43 @@ docker-compose ps -a  # make sure that the container has removed
 docker-compose build [--no-cache] {container name}
 docker-compose up -d {container name}
 ```
+
+## b. LRB tuples details
+
+### `cardatapoints.out`
+
+Consists of **(Type, Time, VID, Spd, Xway, Lane, Dir, Seg, Pos, QID, Sinit, Send, Dow, Tod, Day)** where:
+
+- _Type_: type of tuple (0 = position report
+  2 = account balance request
+  3 = daily expenditure request
+  4 = travel time request)
+- _Time_: timestamp that identifies the time at which the position report was emitted (0...10799 second)
+- _VID_: vehicle identifier (0...MAXINT)
+- _Spd_: speed of the vehicle (0...100)
+- _Xway_: express way (0...L-1)
+- _Lane_: lane (0...4)
+- _Dir_: direction (0...1)
+- _Seg_: segment (0...99)
+- _Pos_: position of the vehicle (0...527999)
+- _QID_: query identifier
+- _Sinit_: start segment
+- _Send_: end segment
+- _Dow_: day of week (1...7)
+- _Tod_: minute number in the day (1...1440)
+- _Day_: day where 1 is yesterday and 69 is 10 weeks ago (1...69)
+
+### `historical-tolls.out`
+
+Consists of **(VID, Day, XWay, Tolls)** where:
+
+- _VID_: vehicle identifier (0...MAXINT)
+- _Day_: day where 1 is yesterday and 69 is 10 weeks ago (1...69)
+- _XWay_: express way (0...L-1)
+- _Tolls_: tolls spent on the express way _Xway_ on day _Day_ by vehicle _VID_
+
+By "first query in the article", is it means the "toll notifications" section in [the article](https://www.cs.brandeis.edu/~linearroad/linear-road.pdf)? (p.6)
+
+## c. Simulate various event rate
+
+Set `fetch.min.bytes` config of Kafka Consumer config to 1000 to simulate 1000 events/s for 1 second?

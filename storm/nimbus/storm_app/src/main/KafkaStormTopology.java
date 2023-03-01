@@ -48,8 +48,8 @@ public class KafkaStormTopology extends ConfigurableTopology {
 
   protected KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers) {
     ByTopicRecordTranslator<String, String> trans = new ByTopicRecordTranslator<>(
-        (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
-        new Fields("topic", "partition", "offset", "key", "value"));
+        (r) -> new Values(r.value()),
+        new Fields("value"));
 
     return KafkaSpoutConfig.builder(bootstrapServers, TOPIC)
         .setProp(ConsumerConfig.GROUP_ID_CONFIG, "kafkaSpoutTestGroup")

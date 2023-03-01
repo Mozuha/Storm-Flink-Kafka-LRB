@@ -16,6 +16,8 @@ services:
                 container_name: data-producer
                 hostname: data-producer
                 tty: true
+                volumes:
+                        - ./data-producer/kafka_connect:/usr/local/lrb/kafka_connect
                 ports:
                         - 9092:9092 # kafka
                 depends_on:
@@ -45,7 +47,7 @@ services:
                 hostname: storm-supervisor
                 tty: true
                 volumes:
-                        - ./storm/supervisor/logs:/usr/local/storm/logs
+                        - ./storm/supervisor/logs:/usr/local/storm/logs/workers-artifacts
                 depends_on:
                         - zookeeper
                 networks:

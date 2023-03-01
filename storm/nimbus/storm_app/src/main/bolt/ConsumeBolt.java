@@ -1,6 +1,7 @@
 package main.bolt;
 
 import java.util.Map;
+import org.json.JSONObject;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -16,12 +17,16 @@ public class ConsumeBolt extends BaseRichBolt {
   @Override
   public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
     this.collector = collector;
-    LOG.info("Hello World");
   }
 
   @Override
   public void execute(Tuple input) {
-    LOG.info("input = [" + input.getValues() + "]");
+    // value/string has a shape e.g.
+    // {"schema":{"type":"string","optional":false},"payload":"2,32,126,-1,-1,-1,-1,-1,-1,4,-1,-1,-1,-1,-1"}
+
+    JSONObject obj = new JSONObject(input.getString(0));
+    String payload = obj.getString("payload");
+    LOG.info("input = [" + payload + "]");
     collector.ack(input);
   }
 

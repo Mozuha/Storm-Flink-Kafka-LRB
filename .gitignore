@@ -1,2 +1,8 @@
 /data-producer/MITSIMLab/pgsql/data
 /data-producer/MITSIMLab/mitsim/data
+
+/storm/supervisor/logs/*/*/worker.log.err
+/storm/supervisor/logs/*/*/worker.log.metrics
+/storm/supervisor/logs/*/*/worker.log.out
+/storm/supervisor/logs/*/*/worker.pid
+/storm/supervisor/logs/*/*/worker.yaml
