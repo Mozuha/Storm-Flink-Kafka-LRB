@@ -215,13 +215,13 @@ export PATH=$PATH:/usr/local/storm/bin:$MITSIMDIR/MITSIMLab/bin:$PVM_ROOT/bin/LI
 ### 3. Run kafka producer
 
 ```bash
-docker-compose up -d zookeeper main
-docker-compose exec main bash
+docker-compose up -d zookeeper data-producer
+docker-compose exec data-producer bash
 
 # To change advertised listners and zookeeper address, change line 38 and 125 in kafka_server.properties file.
 
 # start kafka broker service in background and create topic lrb
-/usr/local/kafka/bin/kafka-server-start.sh kafka_server.properties &
+/usr/local/kafka/bin/kafka-server-start.sh /usr/local/lrb/datadriver/kafka_server.properties &
 /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
 
 # produce data
@@ -231,14 +231,32 @@ docker-compose exec main bash
 ### 4. Start Storm
 
 ```bash
-docker-compose exec main bash
+# On first terminal
+docker-compose exec storm-nimbus bash
+/usr/local/storm/bin/storm nimbus &
+/usr/local/storm/bin/storm ui &  # go to localhost:8081 on browser to check storm ui
 
-storm nimbus &  # run in background
-storm supervisor &
-storm ui &
+# On second terminal
+docker-compose exec storm-supervisor bash
+/usr/local/storm/bin/storm supervisor &
+
+# NOTE: disallow writing messages to stdout and allow only write stderr
+/usr/local/storm/bin/storm nimbus > /dev/null 2>&1 &
+/usr/local/storm/bin/storm supervisor > /dev/null 2>&1 &
+/usr/local/storm/bin/storm ui > /dev/null 2>&1 &
 ```
 
 Access [`http://localhost:8081/`](http://localhost:8081/) to see Storm UI
+
+### 5. Run storm app
+
+```bash
+docker-compose exec storm-nimbus bash
+
+# under /usr/local/storm_app
+mvn clean package -Dstorm.kafka.client.version=3.3.2 -Dcheckstyle.skip
+/usr/local/storm/bin/storm jar target/storm-kafka-lrb-2.2.0.jar main.KafkaStormTopology
+```
 
 ### a. Update only one container within same compose
 

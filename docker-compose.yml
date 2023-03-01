@@ -8,29 +8,61 @@ services:
                 hostname: zookeeper
                 ports:
                         - 2181:2181
+                networks:
+                        - mynet
                 
-        main:
-                #restart: always
-                build: .
-                container_name: main
-                hostname: main
+        data-producer:
+                build: ./data-producer
+                container_name: data-producer
+                hostname: data-producer
+                tty: true
+                ports:
+                        - 9092:9092 # kafka
+                depends_on:
+                        - zookeeper
+                networks:
+                        - mynet
+
+        storm-nimbus:
+                build: ./storm/nimbus
+                container_name: storm-nimbus
+                hostname: storm-nimbus
                 command: /sbin/init
                 privileged: true
                 tty: true
+                volumes:
+                        - ./storm/nimbus/storm_app:/usr/local/storm_app
                 ports:
                         - 8081:8081  # storm UI
-                        - 9092:9092  # kafka
                 depends_on:
                         - zookeeper
+                networks:
+                        - mynet
+
+        storm-supervisor:
+                build: ./storm/supervisor
+                container_name: storm-supervisor
+                hostname: storm-supervisor
+                tty: true
+                volumes:
+                        - ./storm/supervisor/logs:/usr/local/storm/logs
+                depends_on:
+                        - zookeeper
+                networks:
+                        - mynet
                 
         mitsimlab:
-                #build: ./MITSIMLab
+                #build: ./data-producer/MITSIMLab
                 image: centos:centos7
                 container_name: mitsimlab
                 #hostname: mitsimlab
                 tty: true
                 volumes:
-                        - ./MITSIMLab/pgsql/data:/var/lib/pgsql/data
-                        - ./MITSIMLab/mitsim/data:/usr/local/MITSIMLab/data
+                        - ./data-producer/MITSIMLab/pgsql/data:/var/lib/pgsql/data
+                        - ./data-producer/MITSIMLab/mitsim/data:/usr/local/MITSIMLab/data
                 ports:
                         - 5432:5432
+
+networks:
+  mynet:
+    driver: bridge
