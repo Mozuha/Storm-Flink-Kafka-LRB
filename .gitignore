@@ -1,8 +1,10 @@
 /data-producer/MITSIMLab/pgsql/data
 /data-producer/MITSIMLab/mitsim/data
+/data-producer/kafka_connect/datafile20seconds.dat
+/data-producer/kafka_connect/datafile3hours.dat
 
 /storm/supervisor/logs/*/*/worker.log.err
-/storm/supervisor/logs/*/*/worker.log.metrics
+# /storm/supervisor/logs/*/*/worker.log.metrics
 /storm/supervisor/logs/*/*/worker.log.out
 /storm/supervisor/logs/*/*/worker.pid
 /storm/supervisor/logs/*/*/worker.yaml

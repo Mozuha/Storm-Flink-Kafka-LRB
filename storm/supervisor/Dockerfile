@@ -28,3 +28,9 @@ RUN { \
 
 #symlink python
 RUN ln -s /usr/bin/python3 /usr/bin/python
+
+COPY --chown=root:root ./startup.sh /
+
+WORKDIR /usr/local/storm/logs
+
+ENTRYPOINT ["../../../../startup.sh"]

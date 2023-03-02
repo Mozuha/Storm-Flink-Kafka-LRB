@@ -23,3 +23,9 @@ RUN g++ -c `pkg-config --cflags glib-2.0 rdkafka` DataFeeder.cpp && \
   g++ -c MemTuples.cpp && \
   g++ -c Tuple.cpp && \
   g++ -o datafeeder DataFeeder.o `pkg-config --libs glib-2.0 rdkafka` -lpthread LRDataProvider.o MemTuples.o Tuple.o
+
+WORKDIR /usr/local/lrb
+
+COPY --chown=root:root ./startup.sh /
+
+ENTRYPOINT ["../../../startup.sh"]

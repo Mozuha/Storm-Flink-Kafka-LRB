@@ -31,6 +31,8 @@ RUN { \
 #symlink python
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-#copy files for storm app
+COPY --chown=root:root ./startup.sh /
+
 WORKDIR /usr/local/storm_app
-# COPY --chown=root:root storm_app/* /usr/local/storm_app/
+
+ENTRYPOINT ["../../../startup.sh"]
