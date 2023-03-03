@@ -34,6 +34,7 @@ services:
                 tty: true
                 volumes:
                         - ./storm/nimbus/storm_app:/usr/local/storm_app
+                        - ./storm/nimbus/toll_notifications:/usr/local/toll_notifications
                 ports:
                         - 8081:8081  # storm UI
                 depends_on:

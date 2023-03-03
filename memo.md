@@ -118,7 +118,7 @@ docker-compose exec data-producer bash
 
 # To change advertised listners and zookeeper address, change line 38 and 125 in kafka_server.properties file.
 
-# start kafka broker service in background and create topic lrb (these are done upon executing container)
+# start kafka broker service in background and create topic lrb
 /usr/local/kafka/bin/kafka-server-start.sh /usr/local/lrb/datadriver/kafka_server.properties &
 /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
 ```
@@ -223,9 +223,9 @@ Consists of **(Type, Time, VID, Spd, Xway, Lane, Dir, Seg, Pos, QID, Sinit, Send
 - _VID_: vehicle identifier (0...MAXINT)
 - _Spd_: speed of the vehicle (0...100)
 - _Xway_: express way (0...L-1)
-- _Lane_: lane (0...4)
-- _Dir_: direction (0...1)
-- _Seg_: segment (0...99)
+- _Lane_: lane (0...4 where 4 for an exit ramp)
+- _Dir_: direction (0...1 where 0 for eastbound and 1 for westbound)
+- _Seg_: mile-long segment from which the position report is emitted (0...99)
 - _Pos_: position of the vehicle (0...527999)
 - _QID_: query identifier
 - _Sinit_: start segment

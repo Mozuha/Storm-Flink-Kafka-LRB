@@ -28,4 +28,4 @@ WORKDIR /usr/local/lrb
 
 COPY --chown=root:root ./startup.sh /
 
-ENTRYPOINT ["../../../startup.sh"]
+# ENTRYPOINT ["../../../startup.sh"]
