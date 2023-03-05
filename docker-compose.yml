@@ -3,7 +3,7 @@ version: '3'
 services:
         zookeeper:
                 image: zookeeper:latest
-                restart: always
+                # restart: always
                 container_name: zookeeper
                 hostname: zookeeper
                 ports:
@@ -65,6 +65,40 @@ services:
                         - ./data-producer/MITSIMLab/mitsim/data:/usr/local/MITSIMLab/data
                 ports:
                         - 5432:5432
+
+        flink-jobmanager:
+                build: ./flink
+                container_name: flink-jobmanager
+                hostname: flink-jobmanager
+                tty: true
+                volumes:
+                        - ./flink/flink_app:/usr/local/flink_app
+                ports:
+                        - 8082:8081
+                command: jobmanager
+                environment:
+                - |
+                        FLINK_PROPERTIES=
+                        jobmanager.rpc.address: flink-jobmanager
+                        taskmanager.numberOfTaskSlots: 30
+                networks:
+                        - mynet
+        
+        flink-taskmanager:
+                image: flink:latest
+                container_name: flink-taskmanager
+                hostname: flink-taskmanager
+                depends_on:
+                        - flink-jobmanager
+                tty: true
+                command: taskmanager
+                environment:
+                - |
+                        FLINK_PROPERTIES=
+                        jobmanager.rpc.address: flink-jobmanager
+                        taskmanager.numberOfTaskSlots: 30
+                networks:
+                        - mynet
 
 networks:
   mynet:

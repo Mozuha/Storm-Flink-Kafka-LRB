@@ -8,3 +8,6 @@
 /storm/supervisor/logs/*/*/worker.log.out
 /storm/supervisor/logs/*/*/worker.pid
 /storm/supervisor/logs/*/*/worker.yaml
+
+dependency-reduced-pom.xml
+target

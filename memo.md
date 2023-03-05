@@ -199,6 +199,27 @@ sed -n '/ConsumeBolt/p' ../storm/supervisor/logs/kafka-storm-1-1677693130/6700/w
 sed -n '/ConsumeBolt/p' ../storm/supervisor/logs/kafka-storm-1-1677693130/6700/worker.log | sed -n '/52:23/,/52:24/p' > ./tupleoutputs_1sec.log
 ```
 
+## (7. Run flink app)
+
+```bash
+docker-compose up -d flink-jobmanager flink-taskmanager
+docker-compose exec flink-jobmanager bash
+
+# under /usr/local/flink_app
+mvn clean package -Dcheckstyle.skip
+flink run -c main.KafkaFlinkPipeline target/flink-kafka-lrb-1.16.0.jar
+
+# NOTE: to cancel job
+flink list  # to get job id
+flink cancel {jobid}
+
+# NOTE: to see output files
+docker-compose exec flink-taskmanager bash
+cd /tmp/flink_output
+```
+
+Access [`http://localhost:8082/`](http://localhost:8082/) to see Flink UI
+
 ## a. Update only one container within same compose
 
 ```bash
