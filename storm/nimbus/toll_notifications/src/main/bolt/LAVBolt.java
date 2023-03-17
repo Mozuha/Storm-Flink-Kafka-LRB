@@ -5,23 +5,26 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.json.JSONObject;
+import org.apache.storm.state.KeyValueState;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.topology.base.BaseStatefulBolt;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.tuple.Fields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LAVBolt extends BaseRichBolt {
-  protected static final Logger LOG = LoggerFactory.getLogger(TollNotifyBolt.class);
+import main.bolt.StatVal;
+
+public class LAVBolt extends BaseStatefulBolt<KeyValueState<Integer, StatVal>> {
+  protected static final Logger LOG = LoggerFactory.getLogger(LAVBolt.class);
   private OutputCollector collector;
-  Map<List<Integer>, List<Integer>> lav = new HashMap<List<Integer>, List<Integer>>(); // <[xway, seg, dir, minute],
-                                                                                       // [sum, count]>
+  private transient KeyValueState<Integer, StatVal> segStat; // <minute, (count, spd, numVehicles)>
 
   @Override
   public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
@@ -29,56 +32,63 @@ public class LAVBolt extends BaseRichBolt {
   }
 
   @Override
-  public void execute(Tuple input) {
-    int xway = input.getInteger(4);
-    int seg = input.getInteger(6);
-    int dir = input.getInteger(5);
-    int minute = input.getInteger(1);
-    int spd = input.getInteger(3);
+  public void initState(KeyValueState<Integer, StatVal> state) {
+    segStat = state;
+  }
 
-    List<Integer> key = Arrays.asList(xway, seg, dir, minute);
-    if (lav.containsKey(key)) {
-      lav.replace(key, Arrays.asList(lav.get(key).get(0) + spd, lav.get(key).get(1) + 1));
-    } else {
-      lav.put(key, Arrays.asList(spd, 1));
-    }
-    LOG.info("received at lav, minute: " + minute);
+  @Override
+  public void execute(Tuple tuple) {
+    Integer type = tuple.getInteger(0);
+    Integer vid = tuple.getInteger(2);
+    Integer minute = tuple.getInteger(9);
+    Integer spd = tuple.getInteger(3);
 
-    // minute value starts from 1; lav for last 5 mins will be available after the
-    // minute value has reached 6
-    if (5 < minute) {
-      List<Integer> keyPrev1 = Arrays.asList(xway, seg, dir, minute - 1);
-      List<Integer> keyPrev2 = Arrays.asList(xway, seg, dir, minute - 2);
-      List<Integer> keyPrev3 = Arrays.asList(xway, seg, dir, minute - 3);
-      List<Integer> keyPrev4 = Arrays.asList(xway, seg, dir, minute - 4);
-      List<Integer> keyPrev5 = Arrays.asList(xway, seg, dir, minute - 5);
+    if (type == 0) {
+      if (segStat.get(minute) != null) {
+        StatVal prev = segStat.get(minute);
+        prev.count += 1;
+        prev.spd += spd;
+        prev.cars.add(vid);
+        segStat.put(minute, prev);
+      } else {
+        Set<Integer> cars = new HashSet<>();
+        cars.add(vid);
+        segStat.put(minute, new StatVal(1, spd, cars));
+      }
 
-      int sum = lav.get(key).get(0) + lav.get(keyPrev1).get(0) + lav.get(keyPrev2).get(0) + lav.get(keyPrev3).get(0)
-          + lav.get(keyPrev4).get(0) + lav.get(keyPrev5).get(0);
-      int count = lav.get(key).get(1) + lav.get(keyPrev1).get(1) + lav.get(keyPrev2).get(1) + lav.get(keyPrev3).get(1)
-          + lav.get(keyPrev4).get(1) + lav.get(keyPrev5).get(1);
-      Float avg = (float) (sum / count);
-      // collector
-      // .emit(new Values(input.getInteger(0), minute, input.getInteger(2), spd, xway,
-      // dir, seg, input.getInteger(7),
-      // avg));
-      collector
-          .emit(new Values(input.getInteger(0), minute, input.getInteger(2), spd, xway, dir, seg, input.getInteger(7),
-              input.getInteger(8),
-              avg));
+      int totalCount = 0;
+      int totalSpd = 0;
+      for (int i = 1; i <= 5; i++) {
+        if (segStat.get(minute - i) != null) {
+          StatVal prev = segStat.get(minute - i);
+          totalCount += prev.count;
+          totalSpd += prev.spd;
+        }
+      }
+
+      if (1 < minute) {
+        StatVal prev = segStat.get(minute - 1);
+        int lav = 0 < totalCount ? (Math.round(totalSpd / (float) totalCount)) : 0;
+        int numVehicles = prev == null ? 0 : prev.cars.size(); // numVehicles a minute ago
+        LOG.info("numVehicles: " + numVehicles);
+
+        collector.emit(tuple,
+            new Values(type, tuple.getShort(1), vid, spd, tuple.getInteger(4), tuple.getInteger(5), tuple.getInteger(6),
+                tuple.getInteger(7), tuple.getInteger(8), minute, tuple.getLong(10), lav, numVehicles));
+      } else {
+        collector.emit(tuple, new Values(type, tuple.getShort(1), vid, spd, tuple.getInteger(4), tuple.getInteger(5),
+            tuple.getInteger(6), tuple.getInteger(7), tuple.getInteger(8), minute, tuple.getLong(10), 0, 0));
+      }
+
       LOG.info("lav calculated");
     }
 
-    // List<Integer> keyPrev6 = Arrays.asList(xway, seg, dir, minute-6);
-    // if (lav.containsKey(keyPrev6)) lav.remove(keyPrev6);
-
-    collector.ack(input);
+    collector.ack(tuple);
   }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    // declarer.declare(new Fields("time", "minute", "vid", "spd", "xway", "dir",
-    // "seg", "pos", "lav"));
-    declarer.declare(new Fields("time", "minute", "vid", "spd", "xway", "dir", "seg", "pos", "lane", "lav"));
+    declarer.declare(new Fields("type", "time", "vid", "spd", "xway", "lane", "dir", "seg", "pos", "minute",
+        "ingestTime", "lav", "numVehicles"));
   }
 }

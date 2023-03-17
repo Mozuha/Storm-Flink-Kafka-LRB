@@ -16,7 +16,8 @@ import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff.TimeInterval;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.topology.ConfigurableTopology;
-import main.bolt.FilterBolt;
+import main.bolt.ParseBolt;
+import main.bolt.VehicleStateBolt;
 import main.bolt.LAVBolt;
 import main.bolt.TollNotifyBolt;
 
@@ -38,14 +39,11 @@ public class TollNotifTopology extends ConfigurableTopology {
 
     builder.setSpout("kafka-spout", new KafkaSpout<>(getKafkaSpoutConfig(brokerUrl)), 1);
 
-    builder.setBolt("filter", new FilterBolt()).shuffleGrouping("kafka-spout"); // parse json and filter out tuples that
-                                                                                // doesn't match the preconditions
+    builder.setBolt("parse", new ParseBolt()).shuffleGrouping("kafka-spout");
+    builder.setBolt("vehicleState", new VehicleStateBolt()).fieldsGrouping("parse", new Fields("vid"));
     builder.setBolt("lav", new LAVBolt())
-        // .fieldsGrouping("filter", new Fields("xway", "seg", "dir"));
-        .shuffleGrouping("filter");
-
-    builder.setBolt("toll", new TollNotifyBolt())
-        // .fieldsGrouping("lav", new Fields("xway", "seg", "dir"));
+        .fieldsGrouping("vehicleState", new Fields("xway", "seg", "dir"));
+    builder.setBolt("calcToll", new TollNotifyBolt())
         .shuffleGrouping("lav");
 
     conf.setDebug(true);
@@ -66,9 +64,9 @@ public class TollNotifTopology extends ConfigurableTopology {
         .setProp(ConsumerConfig.GROUP_ID_CONFIG, "tollNotifTestGroup")
         .setRetry(getRetryService())
         .setRecordTranslator(trans)
-        .setOffsetCommitPeriodMs(10_000)
+        .setOffsetCommitPeriodMs(1000)
         .setFirstPollOffsetStrategy(EARLIEST)
-        .setMaxUncommittedOffsets(250)
+        .setMaxUncommittedOffsets(1000)
         .build();
   }
 

@@ -1,27 +1,18 @@
 package main.bolt;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.json.JSONObject;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TollNotifyBolt extends BaseRichBolt {
   protected static final Logger LOG = LoggerFactory.getLogger(TollNotifyBolt.class);
   private OutputCollector collector;
-  Map<List<Integer>, Integer> numVehicles = new HashMap<List<Integer>, Integer>(); // <[xway, seg, dir, minute],
-                                                                                   // count>
-  Map<Integer, Integer> segState = new HashMap<Integer, Integer>(); // <vid, seg>
 
   @Override
   public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
@@ -29,52 +20,31 @@ public class TollNotifyBolt extends BaseRichBolt {
   }
 
   @Override
-  public void execute(Tuple input) {
-    LOG.info("received from lav");
-    int xway = input.getInteger(4);
-    int seg = input.getInteger(6);
-    int dir = input.getInteger(5);
-    int minute = input.getInteger(1);
-    // float lav = input.getFloat(8);
-    int lane = input.getInteger(8);
-    float lav = input.getFloat(9);
-    int vid = input.getInteger(2);
+  public void execute(Tuple tuple) {
+    Integer type = tuple.getInteger(0);
+    Integer lane = tuple.getInteger(5);
 
-    List<Integer> key = Arrays.asList(xway, seg, dir, minute);
-    if (numVehicles.containsKey(key)) {
-      numVehicles.replace(key, numVehicles.get(key) + 1);
-    } else {
-      numVehicles.put(key, 1);
-    }
+    if (type == 0) {
+      if (lane != 4) {
+        Integer lav = tuple.getInteger(11);
+        Integer numVehicles = tuple.getInteger(12);
 
-    segState.putIfAbsent(vid, seg);
+        int toll = 0;
+        if (50 < numVehicles && lav < 40) {
+          toll = (int) (2 * Math.pow(numVehicles - 50, 2));
+        }
 
-    LOG.info("before lane cond");
-    // minute value starts from 1; numVehicles for last 1 min will be available
-    // after the
-    // minute value has reached 2
-    // conditions for notifying toll is that lav is less than 40 MPH and numVehicles
-    // as of a minute ago is greater than 50
-    if (2 < minute && lav < 40 && lane != 4 && seg != segState.get(vid)) {
-      List<Integer> keyPrev1 = Arrays.asList(xway, seg, dir, minute - 1);
-      LOG.info("before numVehicles cond");
-      if (50 < numVehicles.get(keyPrev1)) {
-        LOG.info("inside numVehicles cond");
-        int toll = 2 * (numVehicles.get(keyPrev1) - 50) * (numVehicles.get(keyPrev1) - 50);
+        long emit = System.currentTimeMillis() - tuple.getLong(10); // use time passed instead of emit time
 
         // output tuple is (type: 0, vid, time, emit, lav, toll)
-        String tollNotif = String.format("0, %d, %d, %d, %.3f, %d", input.getInteger(2), input.getInteger(0),
-            input.getInteger(0), lav, toll);
+        String tollNotif = String.format("0, %d, %d, %d, %d, %d", tuple.getInteger(2), tuple.getShort(1),
+            emit, lav, toll);
 
         LOG.info("toll notification = [" + tollNotif + "]");
       }
-      segState.replace(vid, seg);
     }
 
-    // List<Integer> keyPrev2 = Arrays.asList(xway, seg, dir, minute-2);
-    // if (numVehicles.containsKey(keyPrev2)) numVehicles.remove(keyPrev2);
-
-    collector.ack(input);
+    collector.ack(tuple);
   }
 
   @Override
