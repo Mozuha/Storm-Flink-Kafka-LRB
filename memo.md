@@ -134,6 +134,9 @@ Feed and store whole data into Kafka broker before running Storm app to make it 
 /usr/local/kafka/bin/connect-standalone.sh connect-standalone.properties connect-file-source.properties
 
 
+# NOTE: if kafka connect doesn't seems like loading data
+rm /usr/local/lrb/kafka_connect/connect.offsets
+
 # NOTE: to check what's inside kafka topic
 /usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server=data-producer:9092 --topic lrb --from-beginning
 
@@ -289,3 +292,7 @@ _100000 events/s_
 - tupleoutputs_100000recds2.log contains 2102 records (another time period)
 
 ---
+
+## d. Note
+
+No case that result in nonzero toll value exists (at least in my sample)? Refer to flink/toll-notification_app/log_sample

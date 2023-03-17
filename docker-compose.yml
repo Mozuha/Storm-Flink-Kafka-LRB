@@ -73,6 +73,7 @@ services:
                 tty: true
                 volumes:
                         - ./flink/flink_app:/usr/local/flink_app
+                        - ./flink/toll-notification_app:/usr/local/toll-notification_app
                 ports:
                         - 8082:8081
                 command: jobmanager
