@@ -12,7 +12,7 @@ public class CalcToll extends RichMapFunction<Event, String> {
     if (event.type == 0) {
       if (event.inNewSeg) {
         if (event.lane != 4) {
-          Double numVehicles = (double) event.numVehicles;
+          Integer numVehicles = event.numVehicles;
           Integer lav = event.lav;
 
           int toll = 0;
@@ -24,8 +24,8 @@ public class CalcToll extends RichMapFunction<Event, String> {
           // long emit = System.currentTimeMillis();
 
           String out = new TollNotification(event.vid, event.time, emit, lav, toll).toString();
-          return out;
-          // return toll == 0 ? "" : out;
+          // return out;
+          return toll == 0 ? "" : out;
         }
       }
     }

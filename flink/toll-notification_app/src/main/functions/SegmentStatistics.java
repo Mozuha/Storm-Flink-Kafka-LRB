@@ -34,6 +34,7 @@ public class SegmentStatistics extends RichMapFunction<Event, Event> {
         Tuple3<Integer, Integer, Set<Integer>> prev = segmentStatistics.get(value.minute);
         prev.f0 += 1;
         prev.f1 += value.speed;
+        prev.f2.add(value.vid);
         segmentStatistics.put(value.minute, prev);
       } else {
         Set<Integer> cars = new HashSet<>();
