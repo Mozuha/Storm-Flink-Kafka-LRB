@@ -123,17 +123,30 @@ docker-compose exec data-producer bash
 /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
 ```
 
-Feed and store whole data into Kafka broker before running Storm app to make it possible simulating certain event rate.
+### 3a. [Option 1] Custom Kafka Producer (Went with this at last)
+
+After started Storm/Flink app, run Producer program
 
 ```bash
-# produce data (it didn't feed the broker...)
-./datafeeder ../dgoutput/cardatapoints.out
-# ./datafeeder ../dgoutput/historical-tolls.out
+# under /usr/local/lrb/kafka_connect/producer
+mvn clean package -Dcheckstyle.skip
 
-# or via Kafka connect (/usr/local/lrb/kafka_connect)
+# 1000 events/s
+java -jar target/kafka-producer-1.0.jar "1000"
+# 100000 events/s
+java -jar target/kafka-producer-1.0.jar "100000"
+```
+
+### 3b. [Option 2] Kafka Connect
+
+Feed and store whole data into Kafka broker before running Storm/Flink app.
+
+```bash
+# under /usr/local/lrb/kafka_connect
 /usr/local/kafka/bin/connect-standalone.sh connect-standalone.properties connect-file-source.properties
+```
 
-
+```bash
 # NOTE: if kafka connect doesn't seems like loading data
 rm /usr/local/lrb/kafka_connect/connect.offsets
 
@@ -152,6 +165,16 @@ deleteall /brokers/topics/lrb  # remove topic folder from zookeeper
 ^C
 /usr/local/kafka/bin/kafka-server-start.sh /usr/local/lrb/datadriver/kafka_server.properties &  # start kafka server again
 /usr/local/kafka/bin/kafka-topics.sh --list --bootstrap-server=data-producer:9092  # check if topic was successfully deleted
+```
+
+### 3c. [Option 3] DataFeeder as proposed in LRB site (Not worked?)
+
+Feed and store whole data into Kafka broker before running Storm/Flink app.
+
+```bash
+# under /usr/local/lrb/datadriver
+./datafeeder ../dgoutput/cardatapoints.out
+# ./datafeeder ../dgoutput/historical-tolls.out
 ```
 
 ## 4. Start Storm

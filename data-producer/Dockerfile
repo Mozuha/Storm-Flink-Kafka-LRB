@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt-get update && \
-  apt-get install -y openjdk-11-jdk wget vim sudo gcc g++ make librdkafka-dev pkg-config libglib2.0-dev
+  apt-get install -y openjdk-11-jdk maven wget vim sudo gcc g++ make librdkafka-dev pkg-config libglib2.0-dev
 
 #install kafka
 WORKDIR /usr/local
