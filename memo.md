@@ -219,10 +219,10 @@ mvn clean package -Dstorm.kafka.client.version=3.3.2 -Dcheckstyle.skip
 ```bash
 # Filter out the logs that matches 'ConsumeBolt' (which shows the tuple output) and then pick those falls into certain timestamp range
 # the example below specifies the timestamp range to 52 min 23 sec 468 to 52 min 23 sec 568
-sed -n '/ConsumeBolt/p' ../storm/supervisor/logs/kafka-storm-1-1677693130/6700/worker.log | sed -n '/52:23\.468/,/52:23\.568/p' > ./tupleoutputs_1sec.log
+sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-1-1677693130/6700/worker.log | sed -n '/52:23\.468/,/52:23\.568/p' > ./tupleoutputs/tupleoutputs_1sec.log
 
 # otherwise simply specify interval in seconds
-sed -n '/ConsumeBolt/p' ../storm/supervisor/logs/kafka-storm-1-1677693130/6700/worker.log | sed -n '/52:23/,/52:24/p' > ./tupleoutputs_1sec.log
+sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-1-1677693130/6700/worker.log | sed -n '/52:23/,/52:24/p' > ./tupleoutputs/tupleoutputs_1sec.log
 ```
 
 ## (7. Run flink app)
@@ -292,7 +292,24 @@ Consists of **(VID, Day, XWay, Tolls)** where:
 
 By "first query in the article", is it means the "toll notifications" section in [the article](https://www.cs.brandeis.edu/~linearroad/linear-road.pdf)? (p.6)
 
-## c. Simulate various event rate
+## c. Observed Producer metrics and values/codes used
+
+- storm-tupleoutputs-1000evts-1sec.log
+
+  - record-send-rate: 1026.6 [records/s]
+  - record-send-total: 32908 [records]
+  - batch.size: 10000
+  - elapsedTime: 2200
+  - sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-1000evts/6700/worker.log | sed -n '/27:55\.894/,/27:56\.894/p' > ./tupleoutputs/storm-tupleoutputs-1000evts-1sec.log
+
+- storm-tupleoutputs-100000evts-1sec.log
+  - record-send-rate: 113196.5 [records/s]
+  - record-send-total: 4314486 [records]
+  - batch.size: 1000000
+  - elapsedTime: 8500
+  - sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-100000evts/6700/worker.log.1 | sed -n '/04:40\.921/,/04:41\.921/p' > ./tupleoutputs/storm-tupleoutputs-100000evts-1sec.log
+
+## d. Simulate various event rate (at Consumer side)
 
 Set Kafka Consumer config's `max.poll.records` to 1000 and `max.poll.interval.ms` to 1000 in KafkaStormTopology.java to simulate 1000 events/s?  
 Then, the number of lines/records extracted to tupleoutputs.log by filtering log output for certain 1 second interval would estimates the throughput at consumer level? (i.e. if there are around 1000 records in tupleoutputs.log, then it suggests that the stream was processed as 1000 events/s in consumer)
@@ -316,6 +333,6 @@ _100000 events/s_
 
 ---
 
-## d. Note
+## e. Note
 
 No case that result in nonzero toll value exists (at least in my sample)? Refer to flink/toll-notification_app/log_sample

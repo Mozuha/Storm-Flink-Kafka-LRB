@@ -62,11 +62,13 @@ public class TollNotifTopology extends ConfigurableTopology {
 
     return KafkaSpoutConfig.builder(bootstrapServers, TOPIC)
         .setProp(ConsumerConfig.GROUP_ID_CONFIG, "tollNotifTestGroup")
+        .setProp(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100000")
+        .setProp(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "1000")
         .setRetry(getRetryService())
         .setRecordTranslator(trans)
         .setOffsetCommitPeriodMs(1000)
         .setFirstPollOffsetStrategy(EARLIEST)
-        .setMaxUncommittedOffsets(1000)
+        .setMaxUncommittedOffsets(100_000)
         .build();
   }
 

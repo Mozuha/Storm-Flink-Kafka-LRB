@@ -53,20 +53,23 @@ public class KafkaStormTopology extends ConfigurableTopology {
 
     return KafkaSpoutConfig.builder(bootstrapServers, TOPIC)
         .setProp(ConsumerConfig.GROUP_ID_CONFIG, "kafkaSpoutTestGroup")
-        .setProp(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100000") // set max number of records that a consumer will
-                                                                   // fetch
-        // in a single poll request to 1000
-        .setProp(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "1000") // set max amount of time that a consumer will wait
-                                                                     // for new data before issuing another poll request
-                                                                     // to 1 sec
+
+        // these are for Kafka Connect option (i.e. adjust event rate at consumer side)
+        /*
+         * max number of records that a consumer will fetch in a single poll request
+         */
+        .setProp(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100000")
+        /*
+         * max amount of time that a consumer will wait for new data before issuing
+         * another poll request
+         */
+        .setProp(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "1000")
+
         .setRetry(getRetryService())
         .setRecordTranslator(trans)
-        // .setOffsetCommitPeriodMs(10_000)
         .setOffsetCommitPeriodMs(1000) // poll records every second
         .setFirstPollOffsetStrategy(EARLIEST)
-        // .setMaxUncommittedOffsets(250)
-        .setMaxUncommittedOffsets(100_000) // max 100000 records can be pending commit before another poll can take
-                                           // place
+        .setMaxUncommittedOffsets(100_000) // max 100k records can be pending commit before another poll can take place
         .build();
   }
 

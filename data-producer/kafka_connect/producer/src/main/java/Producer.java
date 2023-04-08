@@ -25,12 +25,12 @@ public class Producer {
   private static final Logger log = LoggerFactory.getLogger(Producer.class);
 
   // 1000 evt/s
-  private static final Integer THOUS_EVT_BATCH_SIZE = 3500;
-  private static final Integer THOUS_EVT_ELAPSED_TIME = 1200;
+  private static final Integer THOUS_EVT_BATCH_SIZE = 10000;
+  private static final Integer THOUS_EVT_ELAPSED_TIME = 2200;
 
   // 100000 evt/s
-  private static final Integer HUND_THOUS_EVT_BATCH_SIZE = 540000;
-  private static final Integer HUND_THOUS_ELAPSED_TIME = 4000;
+  private static final Integer HUND_THOUS_EVT_BATCH_SIZE = 1000000;
+  private static final Integer HUND_THOUS_ELAPSED_TIME = 8500;
 
   public static void main(String[] args) throws Exception {
 
