@@ -1,10 +1,13 @@
 package main.models;
 
 import lombok.Data;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Data
 public class TollNotification {
 
+  private SimpleDateFormat dtf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   public Integer carId;
   public Short time;
   public Long emit;
@@ -21,6 +24,6 @@ public class TollNotification {
 
   @Override
   public String toString() {
-    return String.format("%d,%s,%s,%d,%s,%s", 0, carId, time, emit, lav, toll);
+    return String.format("%s,%d,%s,%s,%d,%s,%s", dtf.format(new Date()), 0, carId, time, emit, lav, toll);
   }
 }

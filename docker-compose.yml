@@ -92,6 +92,8 @@ services:
                 depends_on:
                         - flink-jobmanager
                 tty: true
+                # volumes:
+                #         - ./flink/logs:/tmp/flink_output
                 command: taskmanager
                 environment:
                 - |

@@ -26,11 +26,13 @@ public class Producer {
 
   // 1000 evt/s
   private static final Integer THOUS_EVT_BATCH_SIZE = 10000;
-  private static final Integer THOUS_EVT_ELAPSED_TIME = 2200;
+  private static final Integer THOUS_EVT_ELAPSED_TIME_STORM = 2200;
+  private static final Integer THOUS_EVT_ELAPSED_TIME_FLINK = 750;
 
   // 100000 evt/s
   private static final Integer HUND_THOUS_EVT_BATCH_SIZE = 1000000;
-  private static final Integer HUND_THOUS_ELAPSED_TIME = 8500;
+  private static final Integer HUND_THOUS_ELAPSED_TIME_STORM = 8500;
+  private static final Integer HUND_THOUS_ELAPSED_TIME_FLINK = 4500;
 
   public static void main(String[] args) throws Exception {
 
@@ -41,12 +43,12 @@ public class Producer {
     switch (args[0]) {
       case "1000":
         BATCH_SIZE = THOUS_EVT_BATCH_SIZE;
-        ELAPSED_TIME = THOUS_EVT_ELAPSED_TIME;
+        ELAPSED_TIME = (args[1].equals("storm")) ? THOUS_EVT_ELAPSED_TIME_STORM : THOUS_EVT_ELAPSED_TIME_FLINK;
         IMM_CLOSE = true;
         break;
       case "100000":
         BATCH_SIZE = HUND_THOUS_EVT_BATCH_SIZE;
-        ELAPSED_TIME = HUND_THOUS_ELAPSED_TIME;
+        ELAPSED_TIME = (args[1].equals("storm")) ? HUND_THOUS_ELAPSED_TIME_STORM : HUND_THOUS_ELAPSED_TIME_FLINK;
         break;
     }
 

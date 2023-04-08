@@ -39,6 +39,7 @@ public class TollNotificationJob {
 
     final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+    env.enableCheckpointing(1000);
 
     KafkaSource<String> source = KafkaSource.<String>builder()
         .setBootstrapServers(KAFKA_BROKER)
@@ -46,7 +47,7 @@ public class TollNotificationJob {
         .setGroupId(GROUP_ID)
         .setStartingOffsets(OffsetsInitializer.earliest())
         .setValueOnlyDeserializer(new SimpleStringSchema())
-        .setProperty("max.poll.records", "1000")
+        .setProperty("max.poll.records", "100000")
         .setProperty("max.poll.interval.ms", "1000")
         .build();
 
@@ -89,8 +90,7 @@ public class TollNotificationJob {
         .sinkTo(
             FileSink.<String>forRowFormat(OUTPUT_FILE, new SimpleStringEncoder<>())
                 .withRollingPolicy(DefaultRollingPolicy.builder()
-                    .withMaxPartSize(MemorySize.ofMebiBytes(1))
-                    .withRolloverInterval(Duration.ofSeconds(10))
+                    .withRolloverInterval(Duration.ofSeconds(1))
                     .build())
                 .build())
         .name("calcToll");

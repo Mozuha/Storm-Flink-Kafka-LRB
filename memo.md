@@ -131,10 +131,10 @@ After started Storm/Flink app, run Producer program
 # under /usr/local/lrb/kafka_connect/producer
 mvn clean package -Dcheckstyle.skip
 
-# 1000 events/s
-java -jar target/kafka-producer-1.0.jar "1000"
+# 1000 events/s (change storm to flink for flink app)
+java -jar target/kafka-producer-1.0.jar "1000" storm
 # 100000 events/s
-java -jar target/kafka-producer-1.0.jar "100000"
+java -jar target/kafka-producer-1.0.jar "100000" storm
 ```
 
 ### 3b. [Option 2] Kafka Connect
@@ -303,11 +303,27 @@ By "first query in the article", is it means the "toll notifications" section in
   - sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-1000evts/6700/worker.log | sed -n '/27:55\.894/,/27:56\.894/p' > ./tupleoutputs/storm-tupleoutputs-1000evts-1sec.log
 
 - storm-tupleoutputs-100000evts-1sec.log
+
   - record-send-rate: 113196.5 [records/s]
   - record-send-total: 4314486 [records]
   - batch.size: 1000000
   - elapsedTime: 8500
   - sed -n '/ConsumeBolt/p' ./storm/supervisor/logs/kafka-storm-100000evts/6700/worker.log.1 | sed -n '/04:40\.921/,/04:41\.921/p' > ./tupleoutputs/storm-tupleoutputs-100000evts-1sec.log
+
+- flink-tupleoutputs-1000evts-1sec.log
+
+  - record-send-rate: 1051.7 [records/s]
+  - record-send-total: 31993 [records]
+  - batch.size: 10000
+  - elapsedTime: 750
+  - (all records were processed in less than 1 sec (i.e. not needed to sed))
+
+- flink-tupleoutputs-100000evts-1sec.log
+  - record-send-rate: 111684.5 [records/s]
+  - record-send-total: 3807436 [records]
+  - batch.size: 1000000
+  - elapsedTime: 4500
+  - sed -n '/06:04\.049/,/06:05\.049/p' ./flink/logs/kafka-flink-100000evts/part-1af64c3a-f6fb-4e09-82e2-503489dd3b1e-0 > ./tupleoutputs/flink-tupleoutputs-100000evts-1sec.log
 
 ## d. Simulate various event rate (at Consumer side)
 
