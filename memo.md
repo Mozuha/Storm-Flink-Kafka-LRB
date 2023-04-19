@@ -246,17 +246,7 @@ cd /tmp/flink_output
 
 Access [`http://localhost:8082/`](http://localhost:8082/) to see Flink UI
 
-## a. Update only one container within same compose
-
-```bash
-docker stop {container ID}
-docker-compose rm {container ID or name}
-docker-compose ps -a  # make sure that the container has removed
-docker-compose build [--no-cache] {container name}
-docker-compose up -d {container name}
-```
-
-## b. LRB tuples details
+## a. LRB tuples details
 
 ### `cardatapoints.out`
 
@@ -292,7 +282,7 @@ Consists of **(VID, Day, XWay, Tolls)** where:
 
 By "first query in the article", is it means the "toll notifications" section in [the article](https://www.cs.brandeis.edu/~linearroad/linear-road.pdf)? (p.6)
 
-## c. Observed Producer metrics and values/codes used
+## b. Observed Producer metrics and values/codes used
 
 - storm-tupleoutputs-1000evts-1sec.log
 
@@ -325,7 +315,7 @@ By "first query in the article", is it means the "toll notifications" section in
   - elapsedTime: 4500
   - sed -n '/06:04\.049/,/06:05\.049/p' ./flink/logs/kafka-flink-100000evts/part-1af64c3a-f6fb-4e09-82e2-503489dd3b1e-0 > ./tupleoutputs/flink-tupleoutputs-100000evts-1sec.log
 
-## d. Simulate various event rate (at Consumer side)
+## c. Simulate various event rate (at Consumer side)
 
 Set Kafka Consumer config's `max.poll.records` to 1000 and `max.poll.interval.ms` to 1000 in KafkaStormTopology.java to simulate 1000 events/s?  
 Then, the number of lines/records extracted to tupleoutputs.log by filtering log output for certain 1 second interval would estimates the throughput at consumer level? (i.e. if there are around 1000 records in tupleoutputs.log, then it suggests that the stream was processed as 1000 events/s in consumer)
@@ -348,7 +338,3 @@ _100000 events/s_
 - tupleoutputs_100000recds2.log contains 2102 records (another time period)
 
 ---
-
-## e. Note
-
-No case that result in nonzero toll value exists (at least in my sample)? Refer to flink/toll-notification_app/log_sample
