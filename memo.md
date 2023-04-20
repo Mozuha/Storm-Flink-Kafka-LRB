@@ -118,7 +118,7 @@ docker-compose exec data-producer bash
 
 # To change advertised listners and zookeeper address, change line 38 and 125 in kafka_server.properties file.
 
-# start kafka broker service in background and create topic lrb
+# start kafka broker service in background and create topic lrb (actually, processes are started upon executing container)
 /usr/local/kafka/bin/kafka-server-start.sh /usr/local/lrb/datadriver/kafka_server.properties &
 /usr/local/kafka/bin/kafka-topics.sh --create --topic lrb --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
 ```
