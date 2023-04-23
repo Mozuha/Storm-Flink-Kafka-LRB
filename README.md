@@ -91,6 +91,8 @@ java -jar target/kafka-producer-1.0.jar "100000" storm
 
 In terminal stdout, you will see Kafka metrics _'record-send-rate'_. When I was modifying the parameters of Kafka producer, I relied on this metrics to regard that "certain event rate is achieved". Please note that this metrics value will be varied every time run the producer program. The log files in this repository were taken with ~1000/~100000 events/s which are result of several trial.
 
+Check [here](memo.md#b-observed-producer-metrics-and-valuescodes-used) to see producer parameters used and metrics observed for the log files under tupleoutputs directory.
+
 ### 4a. Check Storm logs and stop app
 
 You can find log files under _/storm/supervisor/logs_ . Once you confirm log files are there, you can deactivate/kill Storm topology.  
@@ -133,7 +135,7 @@ And delete events from Kafka broker. (Do this every time before run consumer app
 /usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server=data-producer:9092 --topic lrb --from-beginning
 ```
 
-Check [memo](memo.md#3b-option-2-kafka-connect) for command to delete Kafka topic
+Check [here](memo.md#3b-option-2-kafka-connect) for command to delete Kafka topic
 
 ---
 
